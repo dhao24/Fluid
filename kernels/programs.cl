@@ -69,6 +69,20 @@ void advection(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
+  if (id.x > 0 && id.x < gridResolution-1 && id.y>0 && id.y < gridResolution-1)
+  {
+      float2 velocity= inputVelocityBuffer[id.x + id.y * gridResolution];
+      float2 p= (float2)(id.x - velocity.x*dt, id.y - velocity.y*dt);
+
+      outputVelocityBuffer[id.x + id.y * gridResolution]=getBil(p, gridResolution, inputVelocityBuffer);
+  }else if(id.x==0 || id.y ==0 || id.x >= gridResolution-1 || id.y >= gridResolution-1)
+  {
+    if (id.x==0){outputVelocityBuffer[id.x + id.y * gridResolution]=-inputVelocityBuffer[id.x + 1 + id.y * gridResolution];}
+    if (id.x >= gridResolution-1){outputVelocityBuffer[gridResolution-1 + id.y * gridResolution]=-inputVelocityBuffer[gridResolution - 2 + id.y * gridResolution];}
+    if (id.y==0){outputVelocityBuffer[id.x + id.y * gridResolution]=-inputVelocityBuffer[id.x + (id.y+1) * gridResolution];}
+    if (id.y >= gridResolution-1){outputVelocityBuffer[id.x + (gridResolution-1) * gridResolution]=-inputVelocityBuffer[id.x + (gridResolution-2) * gridResolution];}
+
+  }
 }
 
 // TODO
@@ -265,6 +279,8 @@ void visualizationDensity(const int width, const int height, __global float4* vi
 
   if( id.x < width && id.y < height){
     // TODO
+    float4 density = densityBuffer[id.x + id.y * width];
+    visualizationBuffer[id.x + id.y * width] = density;
   }
 }
 

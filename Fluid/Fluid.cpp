@@ -276,7 +276,7 @@ void addForce(int x, int y, cl_float2 force) {
 }
 
 void simulationStep() {
-	// simulateAdvection();
+	simulateAdvection();
 	// simulateDiffusion();
 	// simulateVorticity();
 	// projection();
@@ -410,7 +410,7 @@ void mouseClick(int button, int state, int x, int y) {
 void mouseMove(int x, int y) {
 	force.s[0] = (float)(x - mX);
 	force.s[1] = -(float)(y - mY);
-	//addForce(mX, height - mY, force);
+	// addForce(mX, height - mY, force);
 	addForce(256, 256, force);
 	mX = x;
 	mY = y;
