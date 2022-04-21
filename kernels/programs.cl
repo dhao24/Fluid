@@ -201,6 +201,12 @@ void addForce(const float x, const float y, const float2 force,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
+  float dx= id.x / (float)gridResolution - x;
+  float dy= id.y / (float)gridResolution - y;
+  float radius=0.001f;
+  float c= exp(-(dx*dx + dy*dy) / radius) * dt;
+  velocityBuffer[id.x + id.y * gridResolution] += c * force;
+  densityBuffer[id.x + id.y * gridResolution] += c * density;
 }
 
 __kernel
@@ -272,6 +278,8 @@ void visualizationVelocity(const int width, const int height, __global float4* v
 
   if( id.x < width && id.y < height){
     // TODO
+    float2 velocity = velocityBuffer[id.x + id.y * width];
+    visualizationBuffer[id.x + id.y * width] = clamp((float4)((1.0f + velocity.x) / 2.0f, (1.0f + velocity.y) / 2.0f, 0.0f, 0.0f), 0.0f, 1.0f);
   }
 }
 

@@ -63,6 +63,8 @@ cl_kernel visualizationDensityKernel;
 cl_kernel visualizationVelocityKernel;
 cl_kernel visualizationPressureKernel;
 
+void resetSimulation();
+
 void initSimulation(){
 	clGetPlatformIDs(1, &platformID, NULL);
 	clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &deviceID, NULL);
@@ -126,6 +128,8 @@ void initSimulation(){
 	visualizationDensityKernel = clCreateKernel(simulationProgram, "visualizationDensity", &err);
 	visualizationVelocityKernel = clCreateKernel(simulationProgram, "visualizationVelocity", &err);
 	visualizationPressureKernel = clCreateKernel(simulationProgram, "visualizationPressure", &err);
+
+	resetSimulation();
 }
 
 void resetSimulation() {
@@ -272,11 +276,11 @@ void addForce(int x, int y, cl_float2 force) {
 }
 
 void simulationStep() {
-	simulateAdvection();
-	simulateDiffusion();
-	simulateVorticity();
-	projection();
-	simulateDensityAdvection();
+	// simulateAdvection();
+	// simulateDiffusion();
+	// simulateVorticity();
+	// projection();
+	// simulateDensityAdvection();
 }
 
 void visualizationStep() {
