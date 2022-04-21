@@ -1,0 +1,6 @@
+*
+!.gitignore
+!kernels/
+!Fluid/
+!*.cl
+!*.cpp
