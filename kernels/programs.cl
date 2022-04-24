@@ -86,7 +86,6 @@ void advection(const int gridResolution,
     if (id.x >= gridResolution-1){outputVelocityBuffer[gridResolution-1 + id.y * gridResolution]=-inputVelocityBuffer[gridResolution - 2 + id.y * gridResolution];}
     if (id.y==0){outputVelocityBuffer[id.x + id.y * gridResolution]=-inputVelocityBuffer[id.x + (id.y+1) * gridResolution];}
     if (id.y >= gridResolution-1){outputVelocityBuffer[id.x + (gridResolution-1) * gridResolution]=-inputVelocityBuffer[id.x + (gridResolution-2) * gridResolution];}
-
   }
 }
 
@@ -148,6 +147,10 @@ void diffusion(const int gridResolution,
 
       outputVelocityBuffer[id.x + id.y*gridResolution] = (vL + vR + vB + vT + alpha * velocity) * beta;
     }
+
+    if(id.x == 0 || id.x == gridResolution - 1 || id.y == 0 || id.y == gridResolution - 1){
+      outputVelocityBuffer[id.x + id.y*gridResolution]=inputVelocityBuffer[id.x + id.y*gridResolution];
+    }
   }
 
 // TODO
@@ -176,6 +179,10 @@ void divergence(const int gridResolution, __global float2* velocityBuffer,
   float2 vT = velocityBuffer[id.x + (id.y+1)*gridResolution];
   divergenceBuffer[id.x + id.y*gridResolution]=0.5 * ((vR.x - vL.x) + (vT.y - vB.y));
   }
+
+  if(id.x == 0 || id.x == gridResolution - 1 || id.y == 0 || id.y == gridResolution - 1){
+      divergenceBuffer[id.x + id.y*gridResolution]=0.0f;
+    }
 }
 
 // TODO
@@ -204,8 +211,7 @@ void pressureJacobi(const int gridResolution,
   float alpha = -1.0f;
 	float beta = 0.25f;
 
-  if(id.x > 0 && id.x < gridResolution - 1 &&
-     id.y > 0 && id.y < gridResolution - 1){
+  if(id.x > 0 && id.x < gridResolution - 1 && id.y > 0 && id.y < gridResolution - 1){
   float vL = inputPressureBuffer[id.x - 1 + id.y*gridResolution];
   float vR = inputPressureBuffer[id.x + 1 + id.y*gridResolution];
   float vB = inputPressureBuffer[id.x + (id.y-1)*gridResolution];
@@ -213,6 +219,19 @@ void pressureJacobi(const int gridResolution,
   float divergence = divergenceBuffer[id.x + id.y*gridResolution];
 
   outputPressureBuffer[id.x + id.y*gridResolution] = (vL + vR + vB + vT + divergence * alpha) * beta;
+  }
+
+  if (id.x == 0){
+    outputPressureBuffer[id.x + id.y * gridResolution] = inputPressureBuffer[id.x + 1 + id.y * gridResolution];
+  }
+  if (id.x == gridResolution - 1){
+    outputPressureBuffer[gridResolution - 1 + id.y * gridResolution] = inputPressureBuffer[gridResolution - 2 + id.y * gridResolution];
+  }
+  if (id.y == 0){
+    outputPressureBuffer[id.x + id.y * gridResolution] = inputPressureBuffer[id.x + (id.y + 1) * gridResolution];
+  }
+  if (id.y == gridResolution - 1){
+    outputPressureBuffer[id.x + (gridResolution - 1) * gridResolution] = inputPressureBuffer[id.x + (gridResolution - 2) * gridResolution];
   }
 }
 
@@ -237,8 +256,7 @@ void projection(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
-  if(id.x > 0 && id.x < gridResolution - 1 &&
-     id.y > 0 && id.y < gridResolution - 1){
+  if(id.x > 0 && id.x < gridResolution - 1 && id.y > 0 && id.y < gridResolution - 1){
   float pL = pressureBuffer[id.x - 1 + id.y * gridResolution];
   float pR = pressureBuffer[id.x + 1 + id.y * gridResolution];
   float pB = pressureBuffer[id.x + (id.y - 1) * gridResolution];
@@ -246,6 +264,18 @@ void projection(const int gridResolution,
   float2 velocity = inputVelocityBuffer[id.x + id.y * gridResolution];
 
   outputVelocityBuffer[id.x + id.y * gridResolution] = velocity - (pR - pL, pT - pB);
+  }
+    if (id.x == 0){
+    outputVelocityBuffer[id.x + id.y * gridResolution] = -inputVelocityBuffer[id.x + 1 + id.y * gridResolution];
+  }
+  if (id.x == gridResolution - 1){
+    outputVelocityBuffer[gridResolution - 1 + id.y * gridResolution] = -inputVelocityBuffer[gridResolution - 2 + id.y * gridResolution];
+  }
+  if (id.y == 0){
+    outputVelocityBuffer[id.x + id.y * gridResolution] = -inputVelocityBuffer[id.x + (id.y + 1) * gridResolution];
+  }
+  if (id.y == gridResolution - 1){
+    outputVelocityBuffer[id.x + (gridResolution - 1) * gridResolution] = -inputVelocityBuffer[id.x + (gridResolution - 2) * gridResolution];
   }
 }
 
