@@ -1,6 +1,7 @@
 /* -*- mode: c++ -*- */
 
 __constant float dt = 0.1f;
+__constant float viscosity = 2.2f;
 
 __kernel
 void resetSimulation(const int gridResolution,
@@ -8,6 +9,10 @@ void resetSimulation(const int gridResolution,
 		     __global float* pressureBuffer,
 		     __global float4* densityBuffer){
   int2 id = (int2)(get_global_id(0), get_global_id(1));
+
+  // if (id.x == 1 && id.y == 1) {
+  // printf("Here! ");
+  // }
 
   if( id.x < gridResolution && id.y < gridResolution){
     velocityBuffer[id.x + id.y * gridResolution] = (float2)(0.0f);
@@ -125,7 +130,25 @@ void diffusion(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
   
   // TODO
-}
+  float alpha = 1.0 / (viscosity * dt);
+  float beta = 1.0 / (4.0 + alpha);
+
+  // if (id.x == 1 && id.y == 1) {
+  //   printf("Diffusion Here! alpha=%f beta=%f\n", alpha, beta);
+  // }
+  
+  if(id.x > 0 && id.x < gridResolution - 1 &&
+     id.y > 0 && id.y < gridResolution - 1){
+      float2 vL = inputVelocityBuffer[id.x - 1 + id.y*gridResolution];
+      float2 vR = inputVelocityBuffer[id.x + 1 + id.y*gridResolution];
+      float2 vB = inputVelocityBuffer[id.x + (id.y-1)*gridResolution];
+      float2 vT = inputVelocityBuffer[id.x + (id.y+1)*gridResolution];
+
+      float2 velocity = inputVelocityBuffer[id.x + id.y*gridResolution];
+
+      outputVelocityBuffer[id.x + id.y*gridResolution] = (vL + vR + vB + vT + alpha * velocity) * beta;
+    }
+  }
 
 // TODO
 //
@@ -145,6 +168,14 @@ void divergence(const int gridResolution, __global float2* velocityBuffer,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
  // TODO
+ if(id.x > 0 && id.x < gridResolution - 1 &&
+     id.y > 0 && id.y < gridResolution - 1){
+  float2 vL = velocityBuffer[id.x - 1 + id.y*gridResolution];
+  float2 vR = velocityBuffer[id.x + 1 + id.y*gridResolution];
+  float2 vB = velocityBuffer[id.x + (id.y-1)*gridResolution];
+  float2 vT = velocityBuffer[id.x + (id.y+1)*gridResolution];
+  divergenceBuffer[id.x + id.y*gridResolution]=0.5 * ((vR.x - vL.x) + (vT.y - vB.y));
+  }
 }
 
 // TODO
@@ -170,6 +201,19 @@ void pressureJacobi(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
+  float alpha = -1.0f;
+	float beta = 0.25f;
+
+  if(id.x > 0 && id.x < gridResolution - 1 &&
+     id.y > 0 && id.y < gridResolution - 1){
+  float vL = inputPressureBuffer[id.x - 1 + id.y*gridResolution];
+  float vR = inputPressureBuffer[id.x + 1 + id.y*gridResolution];
+  float vB = inputPressureBuffer[id.x + (id.y-1)*gridResolution];
+  float vT = inputPressureBuffer[id.x + (id.y+1)*gridResolution];
+  float divergence = divergenceBuffer[id.x + id.y*gridResolution];
+
+  outputPressureBuffer[id.x + id.y*gridResolution] = (vL + vR + vB + vT + divergence * alpha) * beta;
+  }
 }
 
 // TODO
@@ -193,6 +237,16 @@ void projection(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
+  if(id.x > 0 && id.x < gridResolution - 1 &&
+     id.y > 0 && id.y < gridResolution - 1){
+  float pL = pressureBuffer[id.x - 1 + id.y * gridResolution];
+  float pR = pressureBuffer[id.x + 1 + id.y * gridResolution];
+  float pB = pressureBuffer[id.x + (id.y - 1) * gridResolution];
+  float pT = pressureBuffer[id.x + (id.y + 1) * gridResolution];
+  float2 velocity = inputVelocityBuffer[id.x + id.y * gridResolution];
+
+  outputVelocityBuffer[id.x + id.y * gridResolution] = velocity - (pR - pL, pT - pB);
+  }
 }
 
 // TODO
