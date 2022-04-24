@@ -103,6 +103,11 @@ void advectionDensity(const int gridResolution,
   int2 id = (int2)(get_global_id(0), get_global_id(1));
 
   // TODO
+  if (id.x < gridResolution && id.y< gridResolution){
+    float2 velocity = velocityBuffer[id.x + id.y * gridResolution];
+    float2 p=(float2)(id.x-velocity.x*dt, id.y-velocity.y*dt); // it is important to add (float2) convert after "="
+    outputDensityBuffer[id.x + id.y * gridResolution] = getBil4(p, gridResolution, inputDensityBuffer);
+  }
 }
 
 // TODO

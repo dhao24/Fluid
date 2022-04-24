@@ -280,7 +280,7 @@ void simulationStep() {
 	simulateDiffusion();
 	simulateVorticity();
 	projection();
-	// simulateDensityAdvection();
+	simulateDensityAdvection();
 }
 
 void visualizationStep() {
